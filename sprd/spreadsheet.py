@@ -58,6 +58,19 @@ class AttackInfo:
 #================================
 # private func
 
+def __get_gc():
+    auth_path='.gspread'
+    if os.path.exists(path+auth_path) == True:
+        #dev
+        scope = ['https://spreadsheets.google.com/feeds',
+              'https://www.googleapis.com/auth/drive']
+
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(path+auth_path+'/gspread-sample-2bf9fcc59d37.json', scope)
+        return gspread.authorize(credentials)
+    else:
+        #release
+        return gspread.service_account()
+
 def search_sheet(sheet_list,search_name):
     for w in sheet_list:
         if w.title == search_name:
@@ -103,12 +116,8 @@ def set_roundabout(wks,round_num):
 # wksを返す
 def setup(sheet_name):
     sheet_name=sheet_name.replace(" ", "")
-
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(path+'gspread/gspread-sample-2bf9fcc59d37.json', scope)
-    gc = gspread.authorize(credentials)
+    
+    gc = __get_gc()
     try:
         workbook=gc.open_by_url(WORKBOOK_URL)
         worksheet_list = workbook.worksheets()
@@ -307,11 +316,7 @@ def get_url():
 
 # settingをロードする
 def load_setting_url():
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(path+'gspread/gspread-sample-2bf9fcc59d37.json', scope)
-    gc = gspread.authorize(credentials)
+    gc = __get_gc()
     try:
         workbook=gc.open_by_url(SETTINGS_URL)
         worksheet_list = workbook.worksheets()
@@ -334,11 +339,8 @@ def load_setting_url():
 def save_setting_url(new_env_list:dict):
     if new_env_list is None:
         return
-    scope = ['https://spreadsheets.google.com/feeds',
-             'https://www.googleapis.com/auth/drive']
-
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(path+'gspread/gspread-sample-2bf9fcc59d37.json', scope)
-    gc = gspread.authorize(credentials)
+    
+    gc = __get_gc()
     try:
         workbook=gc.open_by_url(SETTINGS_URL)
         worksheet_list = workbook.worksheets()
