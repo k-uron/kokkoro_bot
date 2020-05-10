@@ -6,6 +6,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8') # UTF-8に
 import json
 import os.path
 import re
+import base64
 
 #================================
 #define
@@ -60,16 +61,18 @@ class AttackInfo:
 
 def __get_gc():
     auth_path='.gspread'
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
     if os.path.exists(path+auth_path) == True:
         #dev
-        scope = ['https://spreadsheets.google.com/feeds',
-              'https://www.googleapis.com/auth/drive']
-
         credentials = ServiceAccountCredentials.from_json_keyfile_name(path+auth_path+'/gspread-sample-2bf9fcc59d37.json', scope)
-        return gspread.authorize(credentials)
     else:
         #release
-        return gspread.service_account()
+        base64_key=os.environ["SPREAD_SHEET_KEY"]
+        json_key=json.loads(base64.b64decode(base64_key).decode())
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_key,scope)
+    
+    return gspread.authorize(credentials)
 
 def search_sheet(sheet_list,search_name):
     for w in sheet_list:
