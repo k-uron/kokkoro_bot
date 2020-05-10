@@ -1,18 +1,17 @@
 #coding:utf-8
-from pix import prkn_img
-from pix.tesseract import tesseract
 import requests
 import discord
 import re
+import os
 from sprd import spreadsheet
 import json
 
 # read token
-TOKEN_FILE=open("./token","r")
-TOKEN=TOKEN_FILE.read().replace('\n','')
+TOKEN=os.environ["DISCORD_TOKEN"]
 
 text_channel=None
 client = discord.Client()
+gc = spreadsheet.__get_gc()
 
 @client.event
 async def on_ready():
