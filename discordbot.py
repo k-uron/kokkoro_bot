@@ -7,7 +7,11 @@ from sprd import spreadsheet
 import json
 
 # read token
-TOKEN=os.environ["DISCORD_TOKEN"]
+if os.path.exists("./token") == True:
+    TOKEN_FILE=open("./token","r")
+    TOKEN=TOKEN_FILE.read().replace('\n','')
+else:
+    TOKEN=os.environ["DISCORD_TOKEN"]
 
 text_channel=None
 client = discord.Client()
