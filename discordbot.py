@@ -456,7 +456,7 @@ def save_text_channel_name(channel_name:str):
 
 def update_text_channel():
     global text_channel
-    channel_name = spreadsheet.get_env_list()["chat_channel_name"]
+    channel_name = spreadsheet.get_env_list().get("chat_channel_name")
     channels = client.get_all_channels()
     for channel in channels:
         if channel_name == channel.name:
