@@ -10,13 +10,13 @@ import base64
 
 #================================
 #define
-SETTINGS_URL="https://docs.google.com/spreadsheets/d/1Xxb6OgdY_LqdpV7SfmqyfX_IdSGry0t7-y-sXeHWFLE/edit?usp=sharing"
+SETTINGS_URL=""
 SETTINGS_SHEET_NAME="settings"
 SETTINGS_ENV_LIMIT=20 
+
 WORKBOOK_URL=""
 cell_ROUNDABOUT='B1' #周回数
 cell_BOSS_HP='F2'
-#cell_NAMELIST_TOP_BOTTOM='L5:O34' #予約範囲
 cell_NAMELIST_TOP_BOTTOM='n5:q34' #予約範囲
 cell_USERLIST='B5:B34' #メンバーリスト
 cell_RESERVELIST='F5:I34' #予約リスト
@@ -74,13 +74,24 @@ def __get_gc():
     
     return gspread.authorize(credentials)
 
-def search_sheet(sheet_list,search_name):
+def __load_settings_url():
+    url_path=path+'.gspread/url.txt'
+    global SETTINGS_URL
+    if os.path.exists(url_path) == True:
+        #dev
+        f=open(url_path,"r",encoding="utf-8")
+        SETTINGS_URL=f.read().replace('\n','')
+    else:
+        #release
+        SETTINGS_URL=os.environ["SPREAD_SHEET_URL"]
+
+def __search_sheet(sheet_list,search_name):
     for w in sheet_list:
         if w.title == search_name:
             return w
     return None
 
-def create_member_list(wks):
+def __create_member_list(wks):
     #メンバー取得
     cell_list = wks.range(cell_NAMELIST_TOP_BOTTOM)
     c=4
@@ -96,8 +107,8 @@ def create_member_list(wks):
     return r_member_list
 
 # 予約ダメージ合計
-def calc_total_reserve_damage(wks,ra_value):
-    member_list = create_member_list(wks)
+def __calc_total_reserve_damage(wks,ra_value):
+    member_list = __create_member_list(wks)
     total = 0
     for member in member_list:
         # 周回数 check
@@ -107,17 +118,17 @@ def calc_total_reserve_damage(wks,ra_value):
     return total
 
 # 周回数をintで返す
-def get_roundabout(wks:gspread.models.Worksheet):
+def __get_roundabout(wks:gspread.models.Worksheet):
     val = wks.acell(cell_ROUNDABOUT).value
     val = re.sub(r'\D', '',val) # d only
     return int(val) # type int
 
 # 周回数をsetする
-def set_roundabout(wks,round_num):
+def __set_roundabout(wks,round_num):
     wks.update_acell(cell_ROUNDABOUT,str(round_num))
 
 # wksを返す
-def setup(sheet_name):
+def __setup(sheet_name):
     sheet_name=sheet_name.replace(" ", "")
     
     gc = __get_gc()
@@ -126,16 +137,16 @@ def setup(sheet_name):
         worksheet_list = workbook.worksheets()
     except:
         return None
-    return search_sheet(worksheet_list,sheet_name)
+    return __search_sheet(worksheet_list,sheet_name)
 
 # 
-def _next_attack_member(wks):
+def __next_attack_member(wks):
     #周回数
     #cell_ra_value = get_roundabout(wks)
     #メンバー取得
-    member_list = create_member_list(wks)
+    member_list = __create_member_list(wks)
     r_list = []
-    ra_value = get_roundabout(wks)
+    ra_value = __get_roundabout(wks)
     for member in member_list:
         # 周回数 check
         if member.equal_ra(ra_value)  == False:
@@ -148,7 +159,7 @@ def _next_attack_member(wks):
 # -2 not found user
 # -3 not reserve user   
 # userの攻撃情報更新
-def upd_attack_member_cell(wks,user_name:str,damage:str,ra_value:str):
+def __upd_attack_member_cell(wks,user_name:str,damage:str,ra_value:str):
     # ユーザーがいるかチェック
     cell_user_list = wks.range(cell_USERLIST)
     user_cell = None
@@ -172,7 +183,7 @@ def upd_attack_member_cell(wks,user_name:str,damage:str,ra_value:str):
         # boss hp 取得
         boss_hp = int(wks.acell(cell_BOSS_HP).value)
         # トータルダメージの計算
-        total_damage = calc_total_reserve_damage(wks,ra_value)
+        total_damage = __calc_total_reserve_damage(wks,ra_value)
         if boss_hp < total_damage:
             return -3
     else:
@@ -190,7 +201,7 @@ def upd_attack_member_cell(wks,user_name:str,damage:str,ra_value:str):
     return 0
 
 # fin_round周目の攻撃情報を消す
-def clear_round_member_cell(wks,fin_round):
+def __clear_round_member_cell(wks,fin_round):
 
     cell_list = wks.range(cell_RESERVELIST)
     c=4
@@ -231,40 +242,40 @@ def clear_round_member_cell(wks,fin_round):
 
 # 次回攻撃メンバーを配列で返す
 def next_attack_member(boss_name):
-    wks = setup(boss_name)
+    wks = __setup(boss_name)
     if(wks == None):
         print("not found wks["+boss_name+"]")
         return None
 
-    return _next_attack_member(wks)
+    return __next_attack_member(wks)
 
 # -1 not found boss
 # -2 not found user
 # -3 not reserve user
 def reserve_attack_member(boss_name:str,user_name:str,damage:int):
-    wks = setup(boss_name)
+    wks = __setup(boss_name)
     if(wks == None):
         print("not found wks["+boss_name+"]")
         return -1
 
     #周回数
-    ra_value = get_roundabout(wks)
-    result = upd_attack_member_cell(wks,user_name,damage,ra_value)
+    ra_value = __get_roundabout(wks)
+    result = __upd_attack_member_cell(wks,user_name,damage,ra_value)
     if result != 0:
         return result
     
-    return _next_attack_member(wks)
+    return __next_attack_member(wks)
 
 # -1 not found boss
 # -2 not found user
 # -3 not reserve user
 def cancel_attack_member(boss_name,user_name):
-    wks = setup(boss_name)
+    wks = __setup(boss_name)
     if(wks == None):
         print("not found wks["+boss_name+"]")
         return -1
     # cancel
-    result = upd_attack_member_cell(wks,user_name,0,"")
+    result = __upd_attack_member_cell(wks,user_name,0,"")
     if result != 0:
         return result
     
@@ -275,16 +286,16 @@ def cancel_attack_member(boss_name,user_name):
 # -1 not found boss
 # 周回数の情報を消し、消した周回数が現在の周回数と一致するなら+1する
 def clear_round_and_countup(boss_name,fin_round):
-    wks = setup(boss_name)
+    wks = __setup(boss_name)
     if(wks == None):
         print("not found wks["+boss_name+"]")
         return [[],None]
     # clear
-    result = clear_round_member_cell(wks,int(fin_round))
+    result = __clear_round_member_cell(wks,int(fin_round))
     # 周回数が一致しているなら+1する
     next_round = int(fin_round)+1
-    if get_roundabout(wks) == int(fin_round):
-        set_roundabout(wks,next_round)
+    if __get_roundabout(wks) == int(fin_round):
+        __set_roundabout(wks,next_round)
         return [result,next_round]
 
     return [result,None]
@@ -293,7 +304,7 @@ def clear_round_and_countup(boss_name,fin_round):
 # -1
 # 指定PTの凸記入をする
 def upd_pt_convex(user_name,pt_num):
-    wks = setup(PT_CONVEX_SHEET_NAME)
+    wks = __setup(PT_CONVEX_SHEET_NAME)
     if(wks == None):
         print("not found wks["+PT_CONVEX_SHEET_NAME+"]")
         return -1
@@ -325,7 +336,7 @@ def load_setting_url():
         worksheet_list = workbook.worksheets()
     except:
         return None
-    wks = search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
+    wks = __search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
     load_env_list = wks.range('A1:B'+str(SETTINGS_ENV_LIMIT))
     c=2
 
@@ -349,7 +360,7 @@ def save_setting_url(new_env_list:dict):
         worksheet_list = workbook.worksheets()
     except:
         return
-    wks = search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
+    wks = __search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
 
     count=1
     for k,v in new_env_list.items():
@@ -371,20 +382,20 @@ def reload_url():
 
 def get_env_list():
     load_setting_url()
-    global env_list
     return env_list
 
 def main():
+    __load_settings_url()
     load_setting_url()
+
     global env_list
     print(json.dumps(env_list))
-    env_list["chat_channel_name"]=1222
-    save_setting_url(env_list)
+    #env_list["chat_channel_name"]=1222
+    #save_setting_url(env_list)
 
 if __name__ == "__main__":
     main()
 else:
-    f=open(path+"workbook","r",encoding="utf-8")
-    SETTINGS_URL=f.read().replace('\n','')
+    __load_settings_url()
     reload_url()
 
