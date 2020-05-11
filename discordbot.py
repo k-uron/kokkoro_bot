@@ -142,7 +142,7 @@ async def reserve_attacker(message,reserve_bundle):
     rb = reserve_bundle.split(",")
     boss_name =rb[0]
     user_name =rb[1]
-    damage =rb[2]
+    damage =int(rb[2])
     await message.channel.send(boss_name+"に予約でございますね")
     # 予約処理
     result = spreadsheet.reserve_attack_member(boss_name,user_name,damage)
