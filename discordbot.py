@@ -386,11 +386,11 @@ async def on_message(message):
     if message.content == '/stat':
         await show_stat(message)
         return
-    if message.content == '/test':
-        x = prkn_img.start_template_match("./pr_input2.PNG")
-        await message.channel.send('主さまテストですね')
-        await message.channel.send(x)
-        return
+    #if message.content == '/test':
+    #    x = prkn_img.start_template_match("./pr_input2.PNG")
+    #    await message.channel.send('主さまテストですね')
+    #    await message.channel.send(x)
+    #    return
     # メンバーのリストを取得して表示
     if message.content == '/memb':
         await message.channel.send('主さまテストですね')

@@ -107,14 +107,14 @@ def calc_total_reserve_damage(wks,ra_value):
     return total
 
 # 周回数をintで返す
-def get_roundabout(wks):
+def get_roundabout(wks:gspread.models.Worksheet):
     val = wks.acell(cell_ROUNDABOUT).value
     val = re.sub(r'\D', '',val) # d only
     return int(val) # type int
 
 # 周回数をsetする
 def set_roundabout(wks,round_num):
-    wks.update_acell(cell_ROUNDABOUT,str(round_num)+"周目")
+    wks.update_acell(cell_ROUNDABOUT,str(round_num))
 
 # wksを返す
 def setup(sheet_name):
@@ -148,7 +148,7 @@ def _next_attack_member(wks):
 # -2 not found user
 # -3 not reserve user   
 # userの攻撃情報更新
-def upd_attack_member_cell(wks,user_name,in_damage_cell,in_ra_cell):
+def upd_attack_member_cell(wks,user_name:str,damage:str,ra_value:str):
     # ユーザーがいるかチェック
     cell_user_list = wks.range(cell_USERLIST)
     user_cell = None
@@ -161,7 +161,7 @@ def upd_attack_member_cell(wks,user_name,in_damage_cell,in_ra_cell):
         return -2
 
     is_reserve = True
-    if in_damage_cell == 0:
+    if damage == 0:
         is_reserve = False
 
     col_sp_offset = 4 #sp1
@@ -172,7 +172,7 @@ def upd_attack_member_cell(wks,user_name,in_damage_cell,in_ra_cell):
         # boss hp 取得
         boss_hp = int(wks.acell(cell_BOSS_HP).value)
         # トータルダメージの計算
-        total_damage = calc_total_reserve_damage(wks,in_ra_cell)
+        total_damage = calc_total_reserve_damage(wks,ra_value)
         if boss_hp < total_damage:
             return -3
     else:
@@ -182,11 +182,11 @@ def upd_attack_member_cell(wks,user_name,in_damage_cell,in_ra_cell):
 
     # 登録/解除
     if is_reserve:
-        wks.update_cell(user_cell.row,user_cell.col+col_sp_offset,in_damage_cell)
+        wks.update_cell(user_cell.row,user_cell.col+col_sp_offset,damage)
     else:
         wks.update_cell(user_cell.row,user_cell.col+col_sp_offset,"")
 
-    wks.update_cell(user_cell.row,user_cell.col+col_ra_offset,in_ra_cell)
+    wks.update_cell(user_cell.row,user_cell.col+col_ra_offset,ra_value)
     return 0
 
 # fin_round周目の攻撃情報を消す
@@ -241,15 +241,15 @@ def next_attack_member(boss_name):
 # -1 not found boss
 # -2 not found user
 # -3 not reserve user
-def reserve_attack_member(boss_name,user_name,damage):
+def reserve_attack_member(boss_name:str,user_name:str,damage:int):
     wks = setup(boss_name)
     if(wks == None):
         print("not found wks["+boss_name+"]")
         return -1
 
     #周回数
-    cell_ra_value = get_roundabout(wks)
-    result = upd_attack_member_cell(wks,user_name,damage,cell_ra_value)
+    ra_value = get_roundabout(wks)
+    result = upd_attack_member_cell(wks,user_name,damage,ra_value)
     if result != 0:
         return result
     
