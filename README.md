@@ -6,6 +6,7 @@
 https://jp.heroku.com/  
 
 ## 起動前に下記の環境変数を設定してください  
+環境変数の値はuronに直接聞いてください。  
 DISCORD_TOKEN  
 SPREAD_SHEET_KEY  
 SPREAD_SHEET_URL  
