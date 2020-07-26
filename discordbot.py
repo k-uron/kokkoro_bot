@@ -90,18 +90,17 @@ async def boss_mention(message,boss_name):
         return False
     await message.channel.send("ともあれ"+boss_name+"を討伐するのですね")
 
-    # キャラから周回数を取得
-    t = userlist[0].split(",")
-    round_num = t[2]
-    # mention
     if spreadsheet.get_env_list()["everyone"] == "1":
-        await message.channel.send("@everyone "+round_num+"周目"+boss_name+"に入りましたよ")
-    else:
-        await message.channel.send(round_num+"周目の討伐です")
+        await message.channel.send("@everyone "+boss_name+"に入りましたよ")
 
     if len(userlist) < 1:
         await message.channel.send("予約している方が1人も見つかりませんでしたよ")
         return False
+
+    # キャラから周回数を取得
+    t = userlist[0].split(",")
+    round_num = t[2]
+    await message.channel.send(round_num+"周目の討伐です")
 
     # name,damage,ra
     total_damage = 0
