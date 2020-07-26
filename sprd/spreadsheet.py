@@ -12,6 +12,7 @@ import base64
 #define
 SETTINGS_URL=""
 SETTINGS_SHEET_NAME="settings"
+DICT_SHEET_NAME="dict"
 SETTINGS_ENV_LIMIT=20 
 
 WORKBOOK_URL=""
@@ -32,8 +33,6 @@ cell_RANGE_RA=3
 #================================
 # global
 path=os.path.dirname(__file__)+"/"
-env_list = dict()
-
 
 #================================
 # private class
@@ -329,28 +328,34 @@ def get_url():
     return WORKBOOK_URL
 
 # settingをロードする
-def load_setting_url():
+def load_sheet_env(sheet_name:str):
     gc = __get_gc()
     try:
         workbook=gc.open_by_url(SETTINGS_URL)
         worksheet_list = workbook.worksheets()
     except:
         return None
-    wks = __search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
+    wks = __search_sheet(worksheet_list,sheet_name)
+    if wks == None:
+        print("not found sheet["+sheet_name+"]")
+        return None
+
     load_env_list = wks.range('A1:B'+str(SETTINGS_ENV_LIMIT))
     c=2
 
-    global env_list
+    env_list = dict()
     for i in range(0,SETTINGS_ENV_LIMIT):
         env_name = load_env_list[i*c].value
         env_data = load_env_list[1+i*c].value
         if env_name == "":
             continue
-        print(env_name)
+        #print(env_name)
         env_list[env_name]=env_data
 
+    return env_list
+
 # settingをsaveする
-def save_setting_url(new_env_list:dict):
+def save_sheet_env(sheet_name,new_env_list:dict):
     if new_env_list is None:
         return
     
@@ -360,8 +365,9 @@ def save_setting_url(new_env_list:dict):
         worksheet_list = workbook.worksheets()
     except:
         return
-    wks = __search_sheet(worksheet_list,SETTINGS_SHEET_NAME)
+    wks = __search_sheet(worksheet_list,sheet_name)
 
+    # settings保存
     count=1
     for k,v in new_env_list.items():
         wks.update_cell(count,1,k)
@@ -370,10 +376,9 @@ def save_setting_url(new_env_list:dict):
 
 #  クラバトurlをリロードする
 def reload_url():
-    load_setting_url()
+    env_list = load_sheet_env(SETTINGS_SHEET_NAME)
     if env_list["clanbattle_url"] is None:
         return None
-
 
     global WORKBOOK_URL
     old = WORKBOOK_URL
@@ -381,15 +386,18 @@ def reload_url():
     return [old,WORKBOOK_URL]
 
 def get_env_list():
-    load_setting_url()
-    return env_list
+    return load_sheet_env(SETTINGS_SHEET_NAME)
 
+def get_dict_list():
+    return load_sheet_env(DICT_SHEET_NAME)
+
+# unit test
 def main():
     __load_settings_url()
-    load_setting_url()
-
-    global env_list
+    env_list=load_sheet_env(SETTINGS_SHEET_NAME)
     print(json.dumps(env_list))
+    env_list2=load_sheet_env(DICT_SHEET_NAME)
+    print(json.dumps(env_list2))
     #env_list["chat_channel_name"]=1222
     #save_setting_url(env_list)
 

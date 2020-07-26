@@ -89,13 +89,21 @@ async def boss_mention(message,boss_name):
         await message.channel.send("sheetがありませんよ。主さま、名前の確認をしてくださいね")
         return False
     await message.channel.send("ともあれ"+boss_name+"を討伐するのですね")
-    #await message.channel.send("@everyone "+boss_name+"に入りましたよ")
+
+    # キャラから周回数を取得
+    t = userlist[0].split(",")
+    round_num = t[2]
+    # mention
+    if spreadsheet.get_env_list()["everyone"] == "1":
+        await message.channel.send("@everyone "+round_num+"周目"+boss_name+"に入りましたよ")
+    else:
+        await message.channel.send(round_num+"周目の討伐です")
+
     if len(userlist) < 1:
         await message.channel.send("予約している方が1人も見つかりませんでしたよ")
         return False
+
     # name,damage,ra
-    t = userlist[0].split(",")
-    await message.channel.send(t[2]+"周目の討伐です")
     total_damage = 0
     for u in userlist:
         user_datas = u.split(",")
@@ -224,31 +232,30 @@ def check_reserve_finish_chennel(message):
     if message.channel is None:
         return None
 
+    # bossチャンネルかどうか
     boss_ch_pattern = message.channel.name
     if "boss_" not in boss_ch_pattern:
         return None
     boss_name = boss_ch_pattern.split("boss_")[1]
 
-    fin = 0
+    pt_name_list = "PT|Pt|pt"
+    messages=re.split(pt_name_list,message.content)
+    dict_list = spreadsheet.get_dict_list()
+
+    # ptとmsgを取得
+    msg = messages[0]
+    if dict_list.get(messages[0]) is not None:
+        msg = dict_list.get(messages[0])
     pt_num = -1
-    if "おわり" == message.content:
+    if len(messages)>=2:
+        pt_num = int(messages[1])
+
+    fin = 0
+    if "おわり" == msg:
         fin = 1
-    elif message.content.find("おわり") != -1:
-        pt_data = message.content.split("おわり")[1]
-        if pt_data.find("PT") != -1:
-            pt_num = pt_data.split("PT")[1]
-        if pt_data.find("pt") != -1:
-            pt_num = pt_data.split("pt")[1]
-        if pt_data.find("Pt") != -1:
-            pt_num = pt_data.split("Pt")[1]
         # pt numが1-3か確認
-        ipt_num = int(pt_num)
-        if (1 <= ipt_num and ipt_num <= 3):
+        if (1 <= pt_num and pt_num <= 3):
             fin = 2
-        else:
-            fin = 0
-    else:
-        fin = 0
 
     # 一致なし
     if fin == 0:
@@ -452,7 +459,7 @@ async def on_message(message):
 def save_text_channel_name(channel_name:str):
     env_list = spreadsheet.get_env_list()
     env_list["chat_channel_name"] = channel_name
-    spreadsheet.save_setting_url(env_list)
+    spreadsheet.save_sheet_env(spreadsheet.SETTINGS_SHEET_NAME,env_list)
 
 def update_text_channel():
     global text_channel
