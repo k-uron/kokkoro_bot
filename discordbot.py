@@ -242,10 +242,12 @@ def check_reserve_finish_chennel(message):
     messages=re.split(pt_name_list,message.content)
     dict_list = spreadsheet.get_dict_list()
 
-    # ptとmsgを取得
+    #msg get
     msg = messages[0]
-    if dict_list.get(messages[0]) is not None:
-        msg = dict_list.get(messages[0])
+    if dict_list is not None:
+        if dict_list.get(messages[0]) is not None:
+            msg = dict_list.get(messages[0])
+    # pt get
     pt_num = -1
     if len(messages)>=2:
         pt_num = int(messages[1])
