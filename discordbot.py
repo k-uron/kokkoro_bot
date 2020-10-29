@@ -14,7 +14,8 @@ else:
     TOKEN=os.environ["DISCORD_TOKEN"]
 
 text_channel=None
-client = discord.Client()
+intents = discord.Intents.all();
+client = discord.Client(intents=intents)
 gc = spreadsheet.__get_gc()
 
 @client.event
@@ -54,9 +55,9 @@ def download_img(url, file_name):
 
 def member_search(message,name):
     for m in message.guild.members:
-        if m.name.find(name) != -1:
+        if m.name == name:
             return m
-        if m.nick is not None and m.nick.find(name) != -1:
+        if m.nick is not None and m.nick == name:
             return m
     return None
 
@@ -108,7 +109,7 @@ async def boss_mention(message,boss_name):
         user_datas = u.split(",")
         name=user_datas[0]
         total_damage+=int(user_datas[1])
-        member=member_search(message,name)
+        member = member_search(message,name)
         if member is None:
             await message.channel.send("はて?"+name+"さまが見つかりませんね。お名前を変更なさったのでしょうか？")
             continue
